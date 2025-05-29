@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Alepics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: #121212;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      color: #39ff14;
+      text-shadow: 0 0 5px white;
+    }
+    input, textarea, button {
+      display: block;
+      margin: 10px 0;
+      padding: 10px;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 5px;
+      border: none;
+    }
+    #photoPreview img {
+      width: 100px;
+      margin: 5px;
+    }
+    .upload-area {
+      border: 2px dashed #39ff14;
+      padding: 20px;
+      text-align: center;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Alepics</h1>
+
+  <input type="text" id="sectionId" placeholder="ID Sezione (es. estate2024)" />
+  <input type="text" id="sectionName" placeholder="Nome Evento (es. Estate 2024)" />
+  <input type="text" id="eventDate" placeholder="Data (es. 15 Agosto 2024)" />
+  <input type="password" id="sectionPassword" placeholder="Password" />
+
+  <div class="upload-area" id="dropArea">
+    Trascina qui le foto o clicca sotto
+    <input type="file" id="photoInput" multiple accept="image/*" />
+  </div>
+
+  <div id="photoPreview"></div>
+  <button onclick="uploadSection()">Carica sezione</button>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+  <script>
+    // TODO: sostituisci con le tue chiavi Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBdLNG0kPFux43kz787_17XnCvNOzPxDBU",
+      authDomain: "alepics-5883b.firebaseapp.com",
+      projectId: "alepics-5883b",
+      storageBucket: "alepics-5883b.firebasestorage.app",
+      messagingSenderId: "537992725690",
+      appId: "1:537992725690:web:08be5c781512eb95edae83",
+      databaseURL: "https://alepics-5883b-default-rtdb.firebaseio.com/:null"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+    const database = firebase.database();
+
+    const photoInput = document.getElementById('photoInput');
+    const photoPreview = document.getElementById('photoPreview');
+    let selectedFiles = [];
+
+    photoInput.addEventListener('change', (e) => {
+      selectedFiles = Array.from(e.target.files);
+      photoPreview.innerHTML = '';
+      selectedFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = document.createElement('img');
+          img.src = reader.result;
+          photoPreview.appendChild(img);
+        }
+        reader.readAsDataURL(file);
+      });
+    });
+
+    async function uploadSection() {
+      const sectionId = document.getElementById('sectionId').value;
+      const sectionName = document.getElementById('sectionName').value;
+      const eventDate = document.getElementById('eventDate').value;
+      const password = document.getElementById('sectionPassword').value;
+
+      const photoUrls = [];
+
+      for (let file of selectedFiles) {
+        const ref = storage.ref(`foto/${sectionId}/${file.name}`);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+        photoUrls.push(url);
+      }
+
+      await database.ref('gallerie/' + sectionId).set({
+        name: sectionName,
+        date: eventDate,
+        password: password,
+        photos: photoUrls
+      });
+
+      alert("Sezione caricata con successo!");
+    }
+  </script>
+</body>
+</html>
