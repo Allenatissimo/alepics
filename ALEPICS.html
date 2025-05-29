@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alepics</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: white;
+    }
+    h1 {
+      font-size: 4rem;
+      color: #39ff14;
+      text-shadow: 0 0 10px white, 0 0 20px #39ff14, 0 0 30px #39ff14;
+      margin-bottom: 30px;
+    }
+    input[type="password"] {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: none;
+      outline: none;
+    }
+    #galleryPage {
+      display: none;
+      padding: 20px;
+      max-width: 900px;
+    }
+    .photo {
+      width: 200px;
+      margin: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px #39ff14;
+      transition: transform 0.3s;
+    }
+    .photo:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #00ff00;
+    }
+    .photos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="homePage">
+    <h1>Alepics</h1>
+    <input type="password" id="passwordInput" placeholder="Inserisci la password" />
+  </div>
+
+  <div id="galleryPage">
+    <h2 id="sectionName"></h2>
+    <p id="eventDate"></p>
+    <div class="photos" id="photoContainer"></div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+  <script>
+    // Configura qui il tuo Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBdLNG0kPFux43kz787_17XnCvNOzPxDBU",
+      authDomain: "alepics-5883b.firebaseapp.com",
+      databaseURL: "https://alepics-5883b-default-rtdb.firebaseio.com",
+      projectId: "alepics-5883b",
+      storageBucket: "alepics-5883b.firebasestorage.app",
+      messagingSenderId: "537992725690",
+      appId: "1:537992725690:web:08be5c781512eb95edae83"
+    };
+
+    // Inizializza Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const passwordInput = document.getElementById('passwordInput');
+    const homePage = document.getElementById('homePage');
+    const galleryPage = document.getElementById('galleryPage');
+    const sectionNameElem = document.getElementById('sectionName');
+    const eventDateElem = document.getElementById('eventDate');
+    const photoContainer = document.getElementById('photoContainer');
+
+    passwordInput.addEventListener('keydown', async function(e) {
+      if (e.key === 'Enter') {
+        const password = passwordInput.value.trim();
+
+        if (!password) return alert("Inserisci una password!");
+
+        try {
+          // Leggi tutte le gallerie dal database
+          const snapshot = await database.ref('gallerie').once('value');
+          const galleries = snapshot.val();
+
+          let found = false;
+
+          for (const key in galleries) {
+            if (galleries[key].password === password) {
+              found = true;
+
+              // Mostra pagina gallery
+              homePage.style.display = 'none';
+              galleryPage.style.display = 'block';
+
+              sectionNameElem.textContent = galleries[key].name;
+              eventDateElem.textContent = galleries[key].date;
+
+              photoContainer.innerHTML = '';
+
+              galleries[key].photos.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = galleries[key].name;
+                img.className = 'photo';
+                photoContainer.appendChild(img);
+              });
+
+              break;
+            }
+          }
+
+          if (!found) {
+            alert('Password errata!');
+          }
+        } catch (err) {
+          alert('Errore nel caricamento dati');
+          console.error(err);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
